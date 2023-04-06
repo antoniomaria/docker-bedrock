@@ -1,0 +1,16 @@
+version: "3.7"
+
+networks:
+  consul-network:
+    driver: bridge
+
+services:
+
+  registrator:
+    image: "gliderlabs/registrator:latest"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock
+    command: consul://consul-server:8500
+    restart: on-failure
+    networks:
+      - consul-network

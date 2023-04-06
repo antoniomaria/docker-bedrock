@@ -1,0 +1,56 @@
+version: "3.7"
+
+networks:
+  consul-network:
+    driver: bridge
+
+services:
+    
+  zookeeper:
+    image: docker.io/bitnami/zookeeper:3.8
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    volumes:
+      - "zookeeper_data:/bitnami"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    networks:
+      - consul-network 
+
+  # This has three listeners you can experiment with.
+  # DOCKER_INTERNAL for internal traffic on the Docker network
+  # DOCKER_HOST for traffic from the Docker-host machine (`localhost`)
+  # DOCKER_OUTSIDE for traffic from outside, reaching the Docker host on the DNS name `never-gonna-give-you-up`
+
+  kafka:
+    image: docker.io/bitnami/kafka:3.4
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    volumes:
+      - "kafka_data:/bitnami"
+    environment:
+      HOSTNAME: mylocalhostname
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+      ALLOW_PLAINTEXT_LISTENER: yes
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka:29092,LISTENER_DOCKER_HOST://kafka:9092,LISTENER_DOCKER_OUTSIDE://kafka:29094
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka:29092,LISTENER_DOCKER_HOST://localhost:9092,LISTENER_DOCKER_OUTSIDE://never-gonna-give-you-up:29094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_HOST:PLAINTEXT,LISTENER_DOCKER_OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 100
+    depends_on:
+      - zookeeper
+    networks:
+      - consul-network
+
+volumes:
+  zookeeper_data:
+    driver: local
+  kafka_data:
+    driver: local
+  consul_data:
+    driver: local

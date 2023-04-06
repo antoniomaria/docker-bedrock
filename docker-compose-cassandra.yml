@@ -1,0 +1,29 @@
+version: "3.7"
+
+networks:
+  consul-network:
+    driver: bridge
+
+services:
+
+  cassandra:
+    image: docker.io/bitnami/cassandra:3.11
+    hostname: cassandra-server
+    ports:
+      - "9042:9042"
+    volumes:
+      - 'cassandra_data:/bitnami'
+    environment:
+      - CASSANDRA_HOST=cassandra-server
+      - SERVICE_9042_NAME=cassandra
+      - CASSANDRA_SEEDS=cassandra
+      - CASSANDRA_PASSWORD_SEEDER=yes
+      - CASSANDRA_PASSWORD=cassandra
+      - CASSANDRA_USER=cassandra
+    networks:
+      - consul-network
+
+volumes:
+
+  cassandra_data:
+    driver: local
